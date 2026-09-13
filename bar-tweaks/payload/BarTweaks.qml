@@ -29,7 +29,7 @@ Singleton {
     readonly property var defaultConfig: ({
         version: 1,
         vertical: {
-            start:  [["launcher"], ["systray", "tools", "presets"]],
+            start:  [["launcher", "systray", "tools", "presets"]],
             center: [["layoutSelector", "workspaces", "pin"]],
             end:    [["controls", "battery", "clock", "power"]]
         }
