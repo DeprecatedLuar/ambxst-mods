@@ -33,6 +33,11 @@
       "type": "overlay",
       "source": "payload/BarTweaks.qml",
       "target": "modules/bar/BarTweaks.qml"
+    },
+    {
+      "type": "overlay",
+      "source": "payload/BarWidgetMap.qml",
+      "target": "modules/bar/BarWidgetMap.qml"
     }
   ]
 }
