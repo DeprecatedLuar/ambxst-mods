@@ -97,6 +97,96 @@ Item {
     readonly property real innerRadius: (Config.bar && Config.bar.pillStyle === "squished") ? Styling.radius(0) / 2 : Styling.radius(0)
     readonly property bool pinButtonVisible: (Config.bar && Config.bar.showPinButton !== undefined ? Config.bar.showPinButton : true)
 
+    // ------------------------------------------------------------------
+    // Vertical model-driven layout: per-id proxy-property dispatch tables.
+    // Consulted by wireWidget() below. An id absent from a table simply
+    // skips that wiring step - no magic string comparisons scattered
+    // through the layout code.
+    // ------------------------------------------------------------------
+    readonly property var idsUsingEnableShadow: ["launcher", "systray", "tools", "presets", "pin", "power"]
+    readonly property var idsUsingLayerEnabled: ["layoutSelector", "controls", "battery", "clock"]
+    readonly property var idsNeedingBarRef: ["systray", "layoutSelector", "controls", "battery", "clock"]
+    readonly property var idsNeedingScreen: ["workspaces"]
+
+    // Wires the per-id proxy properties BarWidgetMap could not supply
+    // itself (it has no reference to this `root`), plus the seam radii
+    // derived from the widget's position in its pill. Shared by all three
+    // vertical Repeaters so the dispatch logic exists in exactly one place.
+    function wireWidget(loader, modelData) {
+        const item = loader.item;
+        if (!item) {
+            console.warn("BarContent: '" + modelData.id + "' produced no item, skipping");
+            return;
+        }
+
+        // Proxy properties first: SysTray/ControlsButton/BatteryIndicator/
+        // Clock/LayoutSelectorButton derive their own `vertical` (and thus
+        // their own Layout.* hints, read below) from `bar.orientation`, so
+        // `barRef` must land before those hints are read.
+        if (root.idsNeedingBarRef.indexOf(modelData.id) !== -1) {
+            item.barRef = root;
+        }
+        if (root.idsNeedingScreen.indexOf(modelData.id) !== -1) {
+            item.screen = root.screen;
+        }
+        if (modelData.id === "pin") {
+            item.toggleHandler = function () {
+                root.pinned = !root.pinned;
+            };
+            item.pinned = Qt.binding(function () {
+                return root.pinned;
+            });
+        }
+
+        item.startRadius = Qt.binding(function () {
+            return modelData.first ? root.outerRadius : root.innerRadius;
+        });
+        item.endRadius = Qt.binding(function () {
+            return root.resolveEndRadius(modelData);
+        });
+
+        if (root.idsUsingEnableShadow.indexOf(modelData.id) !== -1) {
+            item.enableShadow = Qt.binding(function () {
+                return root.shadowsEnabled;
+            });
+        }
+        if (root.idsUsingLayerEnabled.indexOf(modelData.id) !== -1) {
+            item.layerEnabled = Qt.binding(function () {
+                return root.shadowsEnabled;
+            });
+        }
+
+        // SysTray/ControlsButton/BatteryIndicator/Clock set their own
+        // Layout.* attached properties internally; those go inert once the
+        // widget is a grandchild (via Loader) rather than a direct child of
+        // the ColumnLayout. Forward the widget's own hints onto the Loader
+        // (the actual direct child) as live bindings - SysTray's hints in
+        // particular keep changing as tray items load asynchronously.
+        loader.Layout.fillWidth = Qt.binding(function () {
+            return item.Layout.fillWidth;
+        });
+        loader.Layout.preferredWidth = Qt.binding(function () {
+            return item.Layout.preferredWidth;
+        });
+        loader.Layout.preferredHeight = Qt.binding(function () {
+            return item.Layout.preferredHeight;
+        });
+    }
+
+    // last in pill -> outer radius, except pin when the integrated dock is
+    // appended right after it (dock connects to pin's trailing edge instead).
+    // Not reachable while integratedDockEnabled forces the legacy layout,
+    // kept for correctness if that bailout condition ever changes.
+    function resolveEndRadius(modelData) {
+        if (!modelData.last) {
+            return root.innerRadius;
+        }
+        if (modelData.id === "pin" && root.integratedDockEnabled) {
+            return root.innerRadius;
+        }
+        return root.outerRadius;
+    }
+
     // Reveal logic
     readonly property bool reveal: {
         // If not auto-hiding, always reveal
@@ -557,7 +647,107 @@ Item {
                     id: verticalLoader
                     active: root.orientation === "vertical"
                     anchors.fill: parent
-                    sourceComponent: ColumnLayout {
+                    // Integrated dock placement is out of scope for the
+                    // model-driven layout - bail out to the known-good
+                    // hardcoded structure whenever it is active.
+                    sourceComponent: root.integratedDockEnabled ? legacyVerticalLayout : modelVerticalLayout
+                }
+
+                // ------------------------------------------------------------
+                // Model-driven vertical layout: renders BarTweaks.vertical.
+                // Each group is a Repeater over resolved { id, first, last }
+                // entries; a Loader resolves the widget Component and
+                // wireWidget() (defined on root) applies the per-id proxy
+                // properties and seam radii.
+                // ------------------------------------------------------------
+                Component {
+                    id: modelVerticalLayout
+
+                    ColumnLayout {
+                        spacing: 4
+
+                        Repeater {
+                            model: BarTweaks.vertical.start
+                            delegate: Loader {
+                                id: startLoader
+                                Layout.alignment: Qt.AlignHCenter
+                                sourceComponent: BarWidgetMap.componentFor(modelData.id)
+                                onLoaded: root.wireWidget(startLoader, modelData)
+                            }
+                        }
+
+                        // Center Group Container
+                        Item {
+                            Layout.fillHeight: true
+                            Layout.fillWidth: true
+
+                            ColumnLayout {
+                                anchors.horizontalCenter: parent.horizontalCenter
+
+                                // Calculate target position to be absolutely centered in the bar (vertically)
+                                property real targetY: {
+                                    if (!parent || !bar)
+                                        return 0;
+
+                                    // Force re-evaluation when parent moves
+                                    var _trigger = parent.y;
+
+                                    var parentPos = parent.mapToItem(bar, 0, 0);
+                                    return (bar.height - height) / 2 - parentPos.y;
+                                }
+
+                                // Clamp y position
+                                y: Math.max(0, Math.min(parent.height - height, targetY))
+
+                                height: Math.min(parent.height, implicitHeight)
+                                width: parent.width
+                                spacing: 4
+
+                                Repeater {
+                                    model: BarTweaks.vertical.center
+                                    delegate: Loader {
+                                        id: centerLoader
+                                        Layout.alignment: Qt.AlignHCenter
+                                        sourceComponent: BarWidgetMap.componentFor(modelData.id)
+                                        onLoaded: root.wireWidget(centerLoader, modelData)
+                                    }
+                                }
+                            }
+
+                            Bar.IntegratedDock {
+                                bar: root
+                                orientation: root.orientation
+                                visible: integratedDockEnabled
+                                Layout.fillHeight: true
+                                Layout.fillWidth: true
+                                enableShadow: root.shadowsEnabled
+
+                                startRadius: root.innerRadius
+                                endRadius: root.outerRadius
+                            }
+                        }
+
+                        Repeater {
+                            model: BarTweaks.vertical.end
+                            delegate: Loader {
+                                id: endLoader
+                                Layout.alignment: Qt.AlignHCenter
+                                sourceComponent: BarWidgetMap.componentFor(modelData.id)
+                                onLoaded: root.wireWidget(endLoader, modelData)
+                            }
+                        }
+                    }
+                }
+
+                // ------------------------------------------------------------
+                // Legacy hardcoded vertical layout: byte-for-byte the vanilla
+                // structure. Used only when integratedDockEnabled is true,
+                // since dock placement is out of scope for the model.
+                // ------------------------------------------------------------
+                Component {
+                    id: legacyVerticalLayout
+
+                    ColumnLayout {
                         spacing: 4
 
                         LauncherButton {
@@ -667,7 +857,7 @@ Item {
                                 Layout.fillHeight: true
                                 Layout.fillWidth: true
                                 enableShadow: root.shadowsEnabled
-                                
+
                                 startRadius: root.innerRadius
                                 endRadius: root.outerRadius
                             }

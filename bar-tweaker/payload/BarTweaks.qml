@@ -107,12 +107,13 @@ Singleton {
         return [rawGroup];
     }
 
-    // Whitelists + dedupes ids across the whole vertical layout (start,
-    // center, end together - an id may only appear once anywhere). Pill
-    // boundaries are preserved; empty pills are dropped.
+    // Whitelists ids across the whole vertical layout. Declarative by design:
+    // an id may appear as many times as it's listed, anywhere (same pill,
+    // different pill, different group) - the resolved model renders one
+    // widget instance per occurrence. Pill boundaries are preserved; empty
+    // pills are dropped.
     function normalizeVertical(configObj) {
         const groupNames = ["start", "center", "end"];
-        const seen = {};
         const result = {};
 
         groupNames.forEach(groupName => {
@@ -126,11 +127,6 @@ Singleton {
                         console.warn("BarTweaks: unknown widget id '" + id + "' dropped from '" + groupName + "'");
                         return;
                     }
-                    if (seen[id]) {
-                        console.warn("BarTweaks: duplicate widget id '" + id + "' dropped (keeping first occurrence)");
-                        return;
-                    }
-                    seen[id] = true;
                     outPill.push(id);
                 });
                 if (outPill.length > 0) {
