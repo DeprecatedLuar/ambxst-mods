@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "id": "luar.bar-tweaker",
+  "id": "deprecatedluar.bar-tweaker",
   "name": "Bar Tweaker",
   "version": "0.1.0",
   "license": "MIT",
