@@ -8,7 +8,7 @@ import qs.modules.widgets.dashboard
 import qs.modules.widgets.powermenu
 import qs.modules.widgets.presets
 
-// BarWidgetMap: maps a widget id string (as used in bar-tweaks.json /
+// BarWidgetMap: maps a widget id string (as used in bar-tweaker.json /
 // BarTweaks.qml) to the Component that instantiates it.
 //
 // Single responsibility: id -> Component. It does not know about layout

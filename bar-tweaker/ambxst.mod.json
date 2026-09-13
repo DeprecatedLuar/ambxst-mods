@@ -1,7 +1,7 @@
 {
   "manifestVersion": 1,
-  "id": "luar.bar-tweaks",
-  "name": "Bar Tweaks",
+  "id": "luar.bar-tweaker",
+  "name": "Bar Tweaker",
   "version": "0.1.0",
   "license": "MIT",
   "author": "DeprecatedLuar",

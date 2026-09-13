@@ -5,7 +5,7 @@ import Quickshell.Io
 import qs.config
 
 // BarTweaks: resolves the vertical bar's widget layout from
-// ~/.config/ambxst/config/bar-tweaks.json into a flat, render-ready model.
+// ~/.config/ambxst/config/bar-tweaker.json into a flat, render-ready model.
 //
 // Single responsibility: read + validate + resolve. It does not render
 // anything and does not know about BarContent.qml's layout code.
@@ -35,7 +35,7 @@ Singleton {
         }
     })
 
-    readonly property string configPath: Config.configDir + "/bar-tweaks.json"
+    readonly property string configPath: Config.configDir + "/bar-tweaker.json"
 
     // ------------------------------------------------------------------
     // File loading
@@ -62,12 +62,12 @@ Singleton {
             // same failure-to-regenerate symptom. Compare the enum value
             // directly instead.
             if (error === FileViewError.FileNotFound) {
-                console.log("BarTweaks: bar-tweaks.json not found, creating default...");
+                console.log("BarTweaks: bar-tweaker.json not found, creating default...");
                 const defaults = JSON.stringify(root.defaultConfig, null, 2);
                 fileView.setText(defaults);
                 root.rawText = defaults;
             } else {
-                console.warn("BarTweaks: failed to load bar-tweaks.json:", FileViewError.toString(error));
+                console.warn("BarTweaks: failed to load bar-tweaker.json:", FileViewError.toString(error));
             }
         }
         onFileChanged: reload()
@@ -85,12 +85,12 @@ Singleton {
         try {
             const parsed = JSON.parse(text);
             if (!parsed || typeof parsed !== "object" || typeof parsed.vertical !== "object") {
-                console.warn("BarTweaks: bar-tweaks.json is missing a 'vertical' object, using defaults");
+                console.warn("BarTweaks: bar-tweaker.json is missing a 'vertical' object, using defaults");
                 return root.defaultConfig;
             }
             return parsed;
         } catch (e) {
-            console.warn("BarTweaks: malformed bar-tweaks.json, falling back to defaults:", e);
+            console.warn("BarTweaks: malformed bar-tweaker.json, falling back to defaults:", e);
             return root.defaultConfig;
         }
     }
