@@ -28,6 +28,11 @@
       "type": "overlay",
       "source": "payload/PinButton.qml",
       "target": "modules/bar/PinButton.qml"
+    },
+    {
+      "type": "overlay",
+      "source": "payload/BarTweaks.qml",
+      "target": "modules/bar/BarTweaks.qml"
     }
   ]
 }
