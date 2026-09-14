@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "license": "MIT",
   "author": "DeprecatedLuar",
-  "description": "Makes the vertical bar's widget layout configurable via a JSON file instead of hardcoded QML.",
+  "description": "Makes the vertical bar's widget layout configurable via ~/.config/ambxst/config/mods/bar-tweaker/layout.json instead of hardcoded QML.",
   "permissions": [
     "Reads and writes its own bar layout config file"
   ],
@@ -19,25 +19,27 @@
   "operations": [
     {
       "type": "overlay",
-      "source": "payload/BarContent.qml",
-      "target": "modules/bar/BarContent.qml",
-      "replace": true,
-      "expectedSha256": "ce5c2c32a9b81a2ac358319d74028f906357f289c3ddc90d8dc4d28f59fdd0d9"
+      "source": "payload/tweaker/PinButton.qml",
+      "target": "modules/bar/tweaker/PinButton.qml"
     },
     {
       "type": "overlay",
-      "source": "payload/PinButton.qml",
-      "target": "modules/bar/PinButton.qml"
+      "source": "payload/tweaker/BarTweaks.qml",
+      "target": "modules/bar/tweaker/BarTweaks.qml"
     },
     {
       "type": "overlay",
-      "source": "payload/BarTweaks.qml",
-      "target": "modules/bar/BarTweaks.qml"
+      "source": "payload/tweaker/BarWidgetMap.qml",
+      "target": "modules/bar/tweaker/BarWidgetMap.qml"
     },
     {
       "type": "overlay",
-      "source": "payload/BarWidgetMap.qml",
-      "target": "modules/bar/BarWidgetMap.qml"
+      "source": "payload/tweaker/BarTweakerEngine.qml",
+      "target": "modules/bar/tweaker/BarTweakerEngine.qml"
+    },
+    {
+      "type": "patch",
+      "source": "patches/hook.patch"
     }
   ]
 }

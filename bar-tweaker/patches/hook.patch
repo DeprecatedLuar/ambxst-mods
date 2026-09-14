@@ -1,0 +1,61 @@
+diff --git a/modules/bar/BarContent.qml b/modules/bar/BarContent.qml
+index b9e57ca..c1a3e5a 100644
+--- a/modules/bar/BarContent.qml
++++ b/modules/bar/BarContent.qml
+@@ -17,6 +17,7 @@ import qs.modules.components
+ import qs.modules.services
+ import qs.modules.globals
+ import qs.modules.bar
++import qs.modules.bar.tweaker
+ import qs.config
+ import "." as Bar
+ 
+@@ -27,6 +28,7 @@ Item {
+ 
+     property string barPosition: (Config.bar && Config.bar.position !== undefined && ["top", "bottom", "left", "right"].includes(Config.bar.position) ? Config.bar.position : "top")
+     property string orientation: barPosition === "left" || barPosition === "right" ? "vertical" : "horizontal"
++    readonly property bool tweakerActive: BarTweaks.activeFor(orientation)
+ 
+     // Auto-hide properties
+     onPinnedChanged: {
+@@ -172,8 +174,8 @@ Item {
+     readonly property int leftOuterMargin: (orientation === "horizontal" || barPosition === "left") ? barBg.outerMargin : 0
+     readonly property int rightOuterMargin: (orientation === "horizontal" || barPosition === "right") ? barBg.outerMargin : 0
+ 
+-    readonly property int contentImplicitWidth: orientation === "horizontal" ? (horizontalLoader.item && horizontalLoader.item.implicitWidth !== undefined ? horizontalLoader.item.implicitWidth : 0) : (verticalLoader.item && verticalLoader.item.implicitWidth !== undefined ? verticalLoader.item.implicitWidth : 0)
+-    readonly property int contentImplicitHeight: orientation === "horizontal" ? (horizontalLoader.item && horizontalLoader.item.implicitHeight !== undefined ? horizontalLoader.item.implicitHeight : 0) : (verticalLoader.item && verticalLoader.item.implicitHeight !== undefined ? verticalLoader.item.implicitHeight : 0)
++    readonly property int contentImplicitWidth: orientation === "horizontal" ? (horizontalLoader.item && horizontalLoader.item.implicitWidth !== undefined ? horizontalLoader.item.implicitWidth : 0) : (tweakerActive ? (tweakerLoader.item && tweakerLoader.item.implicitWidth !== undefined ? tweakerLoader.item.implicitWidth : 0) : (verticalLoader.item && verticalLoader.item.implicitWidth !== undefined ? verticalLoader.item.implicitWidth : 0))
++    readonly property int contentImplicitHeight: orientation === "horizontal" ? (horizontalLoader.item && horizontalLoader.item.implicitHeight !== undefined ? horizontalLoader.item.implicitHeight : 0) : (tweakerActive ? (tweakerLoader.item && tweakerLoader.item.implicitHeight !== undefined ? tweakerLoader.item.implicitHeight : 0) : (verticalLoader.item && verticalLoader.item.implicitHeight !== undefined ? verticalLoader.item.implicitHeight : 0))
+     
+     readonly property int barTargetWidth: orientation === "vertical" ? (contentImplicitWidth + 2 * barPadding) : 0
+     readonly property int barTargetHeight: orientation === "horizontal" ? (contentImplicitHeight + 2 * barPadding) : 0
+@@ -352,9 +354,19 @@ Item {
+                 anchors.fill: parent
+                 position: root.barPosition
+ 
++                Loader {
++                    id: tweakerLoader
++                    active: root.tweakerActive
++                    anchors.fill: parent
++                    sourceComponent: BarTweakerEngine {
++                        barRoot: root
++                        barItem: bar
++                    }
++                }
++
+                 Loader {
+                     id: horizontalLoader
+-                    active: root.orientation === "horizontal"
++                    active: root.orientation === "horizontal" && !root.tweakerActive
+                     anchors.fill: parent
+                     sourceComponent: RowLayout {
+                         spacing: 4
+@@ -555,7 +567,7 @@ Item {
+ 
+                 Loader {
+                     id: verticalLoader
+-                    active: root.orientation === "vertical"
++                    active: root.orientation === "vertical" && !root.tweakerActive
+                     anchors.fill: parent
+                     sourceComponent: ColumnLayout {
+                         spacing: 4

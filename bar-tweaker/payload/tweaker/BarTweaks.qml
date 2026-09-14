@@ -5,7 +5,8 @@ import Quickshell.Io
 import qs.config
 
 // BarTweaks: resolves the vertical bar's widget layout from
-// ~/.config/ambxst/config/bar-tweaker.json into a flat, render-ready model.
+// ~/.config/ambxst/config/mods/bar-tweaker/layout.json into a flat,
+// render-ready model.
 //
 // Single responsibility: read + validate + resolve. It does not render
 // anything and does not know about BarContent.qml's layout code.
@@ -15,14 +16,6 @@ Singleton {
     // ------------------------------------------------------------------
     // Constants
     // ------------------------------------------------------------------
-
-    // Widget ids this mod currently knows how to place in the vertical bar.
-    // Anything outside this set is dropped (with a warning) on read.
-    readonly property var knownWidgetIds: [
-        "launcher", "systray", "tools", "presets",
-        "layoutSelector", "workspaces", "pin",
-        "controls", "battery", "clock", "power"
-    ]
 
     // Reproduces the current hardcoded vanilla vertical layout exactly.
     // Used both as the fallback model and as the file seeded on first run.
@@ -35,7 +28,8 @@ Singleton {
         }
     })
 
-    readonly property string configPath: Config.configDir + "/bar-tweaker.json"
+    readonly property string configPath: Config.configDir + "/mods/bar-tweaker/layout.json"
+    readonly property string configFolder: Config.configDir + "/mods/bar-tweaker"
 
     // ------------------------------------------------------------------
     // File loading
@@ -45,6 +39,25 @@ Singleton {
     // (or Config.bar.showPinButton) changes.
     property string rawText: ""
 
+    // True once the FileView has settled (loaded or definitively missing).
+    // `valid` must not report true off of the FileView's initial empty text.
+    property bool fileSettled: false
+
+    // FileView cannot create missing directories, so a FileNotFound is
+    // handled by shelling out to `mkdir -p` (as vanilla config/Config.qml
+    // does) before writing the seeded defaults.
+    Process {
+        id: ensureConfigDirProcess
+        running: false
+        command: ["mkdir", "-p", root.configFolder]
+        onExited: {
+            const defaults = JSON.stringify(root.defaultConfig, null, 2);
+            fileView.setText(defaults);
+            root.rawText = defaults;
+            root.fileSettled = true;
+        }
+    }
+
     FileView {
         id: fileView
         path: root.configPath
@@ -52,6 +65,7 @@ Singleton {
         atomicWrites: true
         onLoaded: {
             root.rawText = text();
+            root.fileSettled = true;
         }
         onLoadFailed: {
             // NOTE: vanilla config/Config.qml checks
@@ -62,12 +76,11 @@ Singleton {
             // same failure-to-regenerate symptom. Compare the enum value
             // directly instead.
             if (error === FileViewError.FileNotFound) {
-                console.log("BarTweaks: bar-tweaker.json not found, creating default...");
-                const defaults = JSON.stringify(root.defaultConfig, null, 2);
-                fileView.setText(defaults);
-                root.rawText = defaults;
+                console.log("BarTweaks: layout.json not found, creating default...");
+                ensureConfigDirProcess.running = true;
             } else {
-                console.warn("BarTweaks: failed to load bar-tweaker.json:", FileViewError.toString(error));
+                console.warn("BarTweaks: failed to load layout.json:", FileViewError.toString(error));
+                root.fileSettled = true;
             }
         }
         onFileChanged: reload()
@@ -77,22 +90,45 @@ Singleton {
     // Parsing + normalization
     // ------------------------------------------------------------------
 
-    // JSON.parse with fallback to defaults on malformed content. Never throws.
+    // Parsed config, or null on malformed/empty content. Never throws and
+    // never falls back to defaults itself - `valid` reports the outcome so
+    // the hook can decide whether to render vanilla instead.
     function parseConfig(text) {
         if (!text || text.trim().length === 0) {
-            return root.defaultConfig;
+            return null;
         }
         try {
             const parsed = JSON.parse(text);
-            if (!parsed || typeof parsed !== "object" || typeof parsed.vertical !== "object") {
-                console.warn("BarTweaks: bar-tweaker.json is missing a 'vertical' object, using defaults");
-                return root.defaultConfig;
+            if (!parsed || typeof parsed !== "object") {
+                console.warn("BarTweaks: layout.json is not a JSON object");
+                return null;
             }
             return parsed;
         } catch (e) {
-            console.warn("BarTweaks: malformed bar-tweaker.json, falling back to defaults:", e);
-            return root.defaultConfig;
+            console.warn("BarTweaks: malformed layout.json:", e);
+            return null;
         }
+    }
+
+    readonly property var parsedConfig: parseConfig(root.rawText)
+
+    // False on parse failure, empty text, or no loaded file yet.
+    readonly property bool valid: root.fileSettled && root.parsedConfig !== null
+
+    // Whether the mod should render for the given bar orientation: config
+    // valid, a section exists for it, and the integrated dock (out of
+    // scope) isn't active.
+    function activeFor(orientation) {
+        if (!root.valid) {
+            return false;
+        }
+        if (typeof root.parsedConfig[orientation] !== "object") {
+            return false;
+        }
+        if (Config.dock && Config.dock.enabled && Config.dock.theme === "integrated") {
+            return false;
+        }
+        return true;
     }
 
     // A group's raw value may be a flat id list (shorthand for one pill) or
@@ -114,6 +150,7 @@ Singleton {
     // pills are dropped.
     function normalizeVertical(configObj) {
         const groupNames = ["start", "center", "end"];
+        const knownWidgetIds = Object.keys(BarWidgetMap.registry);
         const result = {};
 
         groupNames.forEach(groupName => {
@@ -123,7 +160,7 @@ Singleton {
             pills.forEach(pill => {
                 const outPill = [];
                 pill.forEach(id => {
-                    if (root.knownWidgetIds.indexOf(id) === -1) {
+                    if (knownWidgetIds.indexOf(id) === -1) {
                         console.warn("BarTweaks: unknown widget id '" + id + "' dropped from '" + groupName + "'");
                         return;
                     }
@@ -180,21 +217,17 @@ Singleton {
     // Resolved model
     // ------------------------------------------------------------------
 
-    // Recomputes whenever rawText or Config.bar.showPinButton changes.
+    // Recomputes whenever the parsed config or Config.bar.showPinButton
+    // changes. Only meaningful while `activeFor("vertical")` is true; the
+    // hook never reads it otherwise.
     readonly property var vertical: {
-        const parsed = parseConfig(root.rawText);
-        const normalized = normalizeVertical(parsed);
+        const source = root.valid ? root.parsedConfig : root.defaultConfig;
+        const normalized = normalizeVertical(source);
         const filtered = filterVisibility(normalized);
         return {
             start: resolveGroup(filtered.start),
             center: resolveGroup(filtered.center),
             end: resolveGroup(filtered.end)
         };
-    }
-
-    // TEMP: remove when Phase 4 wires this into BarContent.qml's layout.
-    // Verifies the resolved model in isolation via the Quickshell log.
-    onVerticalChanged: {
-        console.log("[BarTweaks] TEMP resolved vertical model:", JSON.stringify(root.vertical));
     }
 }

@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell
+import qs.modules.bar
 import qs.modules.bar.workspaces
 import qs.modules.bar.clock
 import qs.modules.bar.systray
@@ -44,14 +45,6 @@ import qs.modules.widgets.presets
 // consumer to set after instantiation.
 Singleton {
     id: root
-
-    // Widget ids this map knows how to build. Kept in one place, mirrors
-    // BarTweaks.knownWidgetIds.
-    readonly property var knownWidgetIds: [
-        "launcher", "systray", "tools", "presets",
-        "layoutSelector", "workspaces", "pin",
-        "controls", "battery", "clock", "power"
-    ]
 
     // ------------------------------------------------------------------
     // ToggleButton-derived widgets. Each already implements its own
