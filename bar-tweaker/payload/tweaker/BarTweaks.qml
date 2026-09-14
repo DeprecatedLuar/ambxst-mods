@@ -122,6 +122,24 @@ Singleton {
         && typeof root.parsedConfig.layout === "object"
         && !(Config.dock && Config.dock.enabled && Config.dock.theme === "integrated")
 
+    // Optional top-level override for the bar's cross-axis size (height when
+    // horizontal, width when vertical). Not part of defaultConfig - absent
+    // means "use natural content size". Never throws on an invalid value;
+    // warns and falls back to natural size instead.
+    function isValidBarThickness(value) {
+        if (!root.valid || value === undefined) {
+            return false;
+        }
+        if (Number.isInteger(value) && value > 0) {
+            return true;
+        }
+        console.warn("BarTweaks: invalid barThickness '" + value + "', ignored");
+        return false;
+    }
+
+    readonly property bool barThicknessSet: root.isValidBarThickness(root.valid ? root.parsedConfig.barThickness : undefined)
+    readonly property int barThickness: root.barThicknessSet ? root.parsedConfig.barThickness : 0
+
     // A group's raw value may be a flat id list (shorthand for one pill) or
     // already a list of pills. Normalizes to the latter.
     function normalizeGroup(rawGroup) {
