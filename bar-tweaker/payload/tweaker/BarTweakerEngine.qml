@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-// BarTweakerEngine: renders BarTweaks.vertical inside the bar, laid out
+// BarTweakerEngine: renders BarTweaks.layout inside the bar, laid out
 // along whichever axis the host bar is on.
 //
 // Single responsibility: turn the resolved model into widgets. It does not
@@ -36,6 +36,12 @@ GridLayout {
     readonly property var idsNeedingScreen: ["workspaces"]
     readonly property var idsUsingVerticalFlag: ["launcher", "tools", "presets", "power", "pin"]
     readonly property var idsUsingOrientation: ["workspaces"]
+    // Widgets whose cross-axis size comes from their literal QML `parent`
+    // (e.g. SysTray.qml: `height: vertical ? implicitHeight : parent.height`)
+    // rather than from their own Layout.* hints. Once wrapped in this
+    // engine's per-widget Loader, `parent` is the Loader, which otherwise has
+    // nothing forcing it to the bar's cross-axis size in horizontal mode.
+    readonly property var idsNeedingExplicitCrossAxisFill: ["systray"]
 
     // Wires the per-id proxy properties BarWidgetMap could not supply
     // itself (it has no reference to barRoot), plus the seam radii derived
@@ -120,6 +126,18 @@ GridLayout {
         loader.Layout.maximumHeight = Qt.binding(function () {
             return item.Layout.maximumHeight;
         });
+
+        // Override for widgets that never set Layout.fillHeight themselves
+        // (so the generic forward above always yields false) but need the
+        // Loader stretched to the bar's cross-axis size in horizontal mode
+        // so their own `parent.height` read resolves to something real.
+        // Vertical mode is untouched: those widgets size themselves off
+        // their own implicitHeight there, not off `parent`.
+        if (root.idsNeedingExplicitCrossAxisFill.indexOf(modelData.id) !== -1) {
+            loader.Layout.fillHeight = Qt.binding(function () {
+                return !root.vertical;
+            });
+        }
     }
 
     function resolveEndRadius(modelData) {
@@ -127,7 +145,7 @@ GridLayout {
     }
 
     Repeater {
-        model: BarTweaks.vertical.start
+        model: BarTweaks.layout.start
         delegate: Loader {
             id: startLoader
             Layout.alignment: root.vertical ? Qt.AlignHCenter : Qt.AlignVCenter
@@ -181,7 +199,7 @@ GridLayout {
             width: root.vertical ? parent.width : Math.min(parent.width, implicitWidth)
 
             Repeater {
-                model: BarTweaks.vertical.center
+                model: BarTweaks.layout.center
                 delegate: Loader {
                     id: centerLoader
                     Layout.alignment: root.vertical ? Qt.AlignHCenter : Qt.AlignVCenter
@@ -193,7 +211,7 @@ GridLayout {
     }
 
     Repeater {
-        model: BarTweaks.vertical.end
+        model: BarTweaks.layout.end
         delegate: Loader {
             id: endLoader
             Layout.alignment: root.vertical ? Qt.AlignHCenter : Qt.AlignVCenter

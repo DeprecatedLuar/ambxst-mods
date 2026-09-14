@@ -4,9 +4,9 @@ import Quickshell
 import Quickshell.Io
 import qs.config
 
-// BarTweaks: resolves the vertical bar's widget layout from
+// BarTweaks: resolves the bar's widget layout from
 // ~/.config/ambxst/config/mods/bar-tweaker/layout.json into a flat,
-// render-ready model.
+// render-ready model. One layout section drives the bar in every position.
 //
 // Single responsibility: read + validate + resolve. It does not render
 // anything and does not know about BarContent.qml's layout code.
@@ -21,7 +21,7 @@ Singleton {
     // Used both as the fallback model and as the file seeded on first run.
     readonly property var defaultConfig: ({
         version: 1,
-        vertical: {
+        layout: {
             start:  [["launcher", "systray", "tools", "presets"]],
             center: [["layoutSelector", "workspaces", "pin"]],
             end:    [["controls", "battery", "clock", "power"]]
@@ -35,7 +35,7 @@ Singleton {
     // File loading
     // ------------------------------------------------------------------
 
-    // Raw file text, re-parsed by the `vertical` binding below whenever it
+    // Raw file text, re-parsed by the `layout` binding below whenever it
     // (or Config.bar.showPinButton) changes.
     property string rawText: ""
 
@@ -115,21 +115,12 @@ Singleton {
     // False on parse failure, empty text, or no loaded file yet.
     readonly property bool valid: root.fileSettled && root.parsedConfig !== null
 
-    // Whether the mod should render for the given bar orientation: config
-    // valid, a section exists for it, and the integrated dock (out of
-    // scope) isn't active.
-    function activeFor(orientation) {
-        if (!root.valid) {
-            return false;
-        }
-        if (typeof root.parsedConfig[orientation] !== "object") {
-            return false;
-        }
-        if (Config.dock && Config.dock.enabled && Config.dock.theme === "integrated") {
-            return false;
-        }
-        return true;
-    }
+    // Whether the mod should render, in every bar position: config valid,
+    // the `layout` section exists, and the integrated dock (out of scope)
+    // isn't active.
+    readonly property bool active: root.valid
+        && typeof root.parsedConfig.layout === "object"
+        && !(Config.dock && Config.dock.enabled && Config.dock.theme === "integrated")
 
     // A group's raw value may be a flat id list (shorthand for one pill) or
     // already a list of pills. Normalizes to the latter.
@@ -143,18 +134,18 @@ Singleton {
         return [rawGroup];
     }
 
-    // Whitelists ids across the whole vertical layout. Declarative by design:
-    // an id may appear as many times as it's listed, anywhere (same pill,
+    // Whitelists ids across the whole layout. Declarative by design: an id
+    // may appear as many times as it's listed, anywhere (same pill,
     // different pill, different group) - the resolved model renders one
     // widget instance per occurrence. Pill boundaries are preserved; empty
     // pills are dropped.
-    function normalizeVertical(configObj) {
+    function normalizeLayout(section) {
         const groupNames = ["start", "center", "end"];
         const knownWidgetIds = Object.keys(BarWidgetMap.registry);
         const result = {};
 
         groupNames.forEach(groupName => {
-            const pills = normalizeGroup(configObj.vertical[groupName]);
+            const pills = normalizeGroup(section[groupName]);
             const outPills = [];
 
             pills.forEach(pill => {
@@ -179,13 +170,13 @@ Singleton {
 
     // Drops widgets that are conditionally hidden. Must run before first/last
     // is computed, since visibility changes which entry is the pill edge.
-    function filterVisibility(normalizedVertical) {
+    function filterVisibility(normalizedLayout) {
         const showPinButton = (Config.bar && Config.bar.showPinButton !== undefined ? Config.bar.showPinButton : true);
         const result = {};
 
         ["start", "center", "end"].forEach(groupName => {
             const outPills = [];
-            normalizedVertical[groupName].forEach(pill => {
+            normalizedLayout[groupName].forEach(pill => {
                 const outPill = pill.filter(id => id !== "pin" || showPinButton);
                 if (outPill.length > 0) {
                     outPills.push(outPill);
@@ -218,11 +209,11 @@ Singleton {
     // ------------------------------------------------------------------
 
     // Recomputes whenever the parsed config or Config.bar.showPinButton
-    // changes. Only meaningful while `activeFor("vertical")` is true; the
-    // hook never reads it otherwise.
-    readonly property var vertical: {
-        const source = root.valid ? root.parsedConfig : root.defaultConfig;
-        const normalized = normalizeVertical(source);
+    // changes. Only meaningful while `active` is true; the hook never reads
+    // it otherwise.
+    readonly property var layout: {
+        const source = root.valid ? root.parsedConfig.layout : root.defaultConfig.layout;
+        const normalized = normalizeLayout(source);
         const filtered = filterVisibility(normalized);
         return {
             start: resolveGroup(filtered.start),

@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "license": "MIT",
   "author": "DeprecatedLuar",
-  "description": "Makes the vertical bar's widget layout configurable via ~/.config/ambxst/config/mods/bar-tweaker/layout.json instead of hardcoded QML.",
+  "description": "Makes the bar's widget layout configurable for every bar position via ~/.config/ambxst/config/mods/bar-tweaker/layout.json instead of hardcoded QML.",
   "permissions": [
     "Reads and writes its own bar layout config file"
   ],
