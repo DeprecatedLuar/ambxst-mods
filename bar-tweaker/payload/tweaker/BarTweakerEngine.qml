@@ -1,13 +1,14 @@
 import QtQuick
 import QtQuick.Layouts
 
-// BarTweakerEngine: renders BarTweaks.vertical inside the vertical bar.
+// BarTweakerEngine: renders BarTweaks.vertical inside the bar, laid out
+// along whichever axis the host bar is on.
 //
 // Single responsibility: turn the resolved model into widgets. It does not
 // parse config (BarTweaks) and does not build widgets itself (BarWidgetMap)
 // - it only dispatches proxy wiring and seam radii, and lays the three
 // groups out.
-ColumnLayout {
+GridLayout {
     id: root
 
     // Vanilla BarContent.qml's `root` (screen, pinned, radii, shadows) and
@@ -17,7 +18,12 @@ ColumnLayout {
     required property var barRoot
     required property var barItem
 
-    spacing: 4
+    readonly property string verticalOrientation: "vertical"
+    readonly property bool vertical: root.barRoot.orientation === root.verticalOrientation
+
+    flow: root.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
+    rowSpacing: 4
+    columnSpacing: 4
 
     // ------------------------------------------------------------------
     // Per-id proxy-property dispatch tables. Consulted by wireWidget()
@@ -28,6 +34,8 @@ ColumnLayout {
     readonly property var idsUsingLayerEnabled: ["layoutSelector", "controls", "battery", "clock"]
     readonly property var idsNeedingBarRef: ["systray", "layoutSelector", "controls", "battery", "clock"]
     readonly property var idsNeedingScreen: ["workspaces"]
+    readonly property var idsUsingVerticalFlag: ["launcher", "tools", "presets", "power", "pin"]
+    readonly property var idsUsingOrientation: ["workspaces"]
 
     // Wires the per-id proxy properties BarWidgetMap could not supply
     // itself (it has no reference to barRoot), plus the seam radii derived
@@ -38,6 +46,17 @@ ColumnLayout {
         if (!item) {
             console.warn("BarTweakerEngine: '" + modelData.id + "' produced no item, skipping");
             return;
+        }
+
+        if (root.idsUsingVerticalFlag.indexOf(modelData.id) !== -1) {
+            item.vertical = Qt.binding(function () {
+                return root.vertical;
+            });
+        }
+        if (root.idsUsingOrientation.indexOf(modelData.id) !== -1) {
+            item.orientation = Qt.binding(function () {
+                return root.barRoot.orientation;
+            });
         }
 
         // Proxy properties first: SysTray/ControlsButton/BatteryIndicator/
@@ -80,17 +99,26 @@ ColumnLayout {
         // SysTray/ControlsButton/BatteryIndicator/Clock set their own
         // Layout.* attached properties internally; those go inert once the
         // widget is a grandchild (via Loader) rather than a direct child of
-        // the ColumnLayout. Forward the widget's own hints onto the Loader
-        // (the actual direct child) as live bindings - SysTray's hints in
+        // the layout. Forward the widget's own hints onto the Loader (the
+        // actual direct child) as live bindings - SysTray's hints in
         // particular keep changing as tray items load asynchronously.
         loader.Layout.fillWidth = Qt.binding(function () {
             return item.Layout.fillWidth;
+        });
+        loader.Layout.fillHeight = Qt.binding(function () {
+            return item.Layout.fillHeight;
         });
         loader.Layout.preferredWidth = Qt.binding(function () {
             return item.Layout.preferredWidth;
         });
         loader.Layout.preferredHeight = Qt.binding(function () {
             return item.Layout.preferredHeight;
+        });
+        loader.Layout.maximumWidth = Qt.binding(function () {
+            return item.Layout.maximumWidth;
+        });
+        loader.Layout.maximumHeight = Qt.binding(function () {
+            return item.Layout.maximumHeight;
         });
     }
 
@@ -102,7 +130,7 @@ ColumnLayout {
         model: BarTweaks.vertical.start
         delegate: Loader {
             id: startLoader
-            Layout.alignment: Qt.AlignHCenter
+            Layout.alignment: root.vertical ? Qt.AlignHCenter : Qt.AlignVCenter
             sourceComponent: BarWidgetMap.componentFor(modelData.id)
             onLoaded: root.wireWidget(startLoader, modelData)
         }
@@ -113,10 +141,16 @@ ColumnLayout {
         Layout.fillHeight: true
         Layout.fillWidth: true
 
-        ColumnLayout {
-            anchors.horizontalCenter: parent.horizontalCenter
+        GridLayout {
+            flow: root.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
+            rowSpacing: 4
+            columnSpacing: 4
 
-            // Calculate target position to be absolutely centered in the bar (vertically)
+            anchors.horizontalCenter: root.vertical ? parent.horizontalCenter : undefined
+            anchors.verticalCenter: root.vertical ? undefined : parent.verticalCenter
+
+            // Calculate target position to be absolutely centered in the
+            // bar, on the cross axis.
             property real targetY: {
                 if (!parent || !root.barItem)
                     return 0;
@@ -128,18 +162,29 @@ ColumnLayout {
                 return (root.barItem.height - height) / 2 - parentPos.y;
             }
 
-            // Clamp y position
-            y: Math.max(0, Math.min(parent.height - height, targetY))
+            property real targetX: {
+                if (!parent || !root.barItem)
+                    return 0;
 
-            height: Math.min(parent.height, implicitHeight)
-            width: parent.width
-            spacing: 4
+                // Force re-evaluation when parent moves
+                var _trigger = parent.x;
+
+                var parentPos = parent.mapToItem(root.barItem, 0, 0);
+                return (root.barItem.width - width) / 2 - parentPos.x;
+            }
+
+            // Clamp position on the cross axis
+            y: root.vertical ? Math.max(0, Math.min(parent.height - height, targetY)) : 0
+            x: root.vertical ? 0 : Math.max(0, Math.min(parent.width - width, targetX))
+
+            height: root.vertical ? Math.min(parent.height, implicitHeight) : parent.height
+            width: root.vertical ? parent.width : Math.min(parent.width, implicitWidth)
 
             Repeater {
                 model: BarTweaks.vertical.center
                 delegate: Loader {
                     id: centerLoader
-                    Layout.alignment: Qt.AlignHCenter
+                    Layout.alignment: root.vertical ? Qt.AlignHCenter : Qt.AlignVCenter
                     sourceComponent: BarWidgetMap.componentFor(modelData.id)
                     onLoaded: root.wireWidget(centerLoader, modelData)
                 }
@@ -151,7 +196,7 @@ ColumnLayout {
         model: BarTweaks.vertical.end
         delegate: Loader {
             id: endLoader
-            Layout.alignment: Qt.AlignHCenter
+            Layout.alignment: root.vertical ? Qt.AlignHCenter : Qt.AlignVCenter
             sourceComponent: BarWidgetMap.componentFor(modelData.id)
             onLoaded: root.wireWidget(endLoader, modelData)
         }

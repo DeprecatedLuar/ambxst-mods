@@ -21,19 +21,25 @@ import qs.modules.widgets.presets
 // every produced item exposes `startRadius`/`endRadius` (from the existing
 // widget contract) plus whatever this map could not supply itself:
 //
-//   launcher, tools, presets, power   -> nothing extra; set enableShadow,
-//                                        startRadius, endRadius.
+//   launcher, tools, presets, power,
+//   pin                                -> nothing extra beyond enableShadow,
+//                                        startRadius, endRadius. `vertical`
+//                                        is wired by the engine, not
+//                                        hardcoded here.
 //   systray, clock, controls,
 //   battery, layoutSelector           -> set `barRef` (the BarContent.qml
 //                                        `root`), plus enableShadow
 //                                        (systray/clock) or layerEnabled
 //                                        (controls/battery/layoutSelector),
-//                                        startRadius, endRadius.
+//                                        startRadius, endRadius. These derive
+//                                        their own `vertical` from
+//                                        `bar.orientation` once `barRef`
+//                                        lands.
 //   workspaces                        -> set `screen` (root.screen), plus
-//                                        startRadius, endRadius. Orientation
-//                                        is fixed to "vertical" here since
-//                                        this mod is vertical-only.
-//   pin                               -> set `toggleHandler` (a function,
+//                                        startRadius, endRadius.
+//                                        `orientation` is wired by the
+//                                        engine, not hardcoded here.
+//   pin                                -> set `toggleHandler` (a function,
 //                                        e.g. () => root.pinned = !root.pinned)
 //                                        and `pinned` (bool, e.g. bound to
 //                                        root.pinned), plus enableShadow,
@@ -48,33 +54,25 @@ Singleton {
 
     // ------------------------------------------------------------------
     // ToggleButton-derived widgets. Each already implements its own
-    // `onToggle`, so only the layout-independent-but-fixed-for-this-mod
-    // `vertical` needs setting here. `enableShadow`/`startRadius`/
-    // `endRadius` are already plain properties the consumer sets directly.
+    // `onToggle`. `enableShadow`/`startRadius`/`endRadius` are already plain
+    // properties the consumer sets directly; `vertical` is wired by the
+    // engine (BarTweakerEngine.idsUsingVerticalFlag), not hardcoded here.
     // ------------------------------------------------------------------
 
     property Component launcherComponent: Component {
-        LauncherButton {
-            vertical: true
-        }
+        LauncherButton {}
     }
 
     property Component toolsComponent: Component {
-        ToolsButton {
-            vertical: true
-        }
+        ToolsButton {}
     }
 
     property Component presetsComponent: Component {
-        PresetsButton {
-            vertical: true
-        }
+        PresetsButton {}
     }
 
     property Component powerComponent: Component {
-        PowerButton {
-            vertical: true
-        }
+        PowerButton {}
     }
 
     // ------------------------------------------------------------------
@@ -127,6 +125,12 @@ Singleton {
     // Workspaces only ever needs `bar.screen` out of its `bar` property, so
     // the exposed surface is just `screen` - the shim QtObject from vanilla
     // BarContent.qml is reproduced here instead of pushed onto the consumer.
+    //
+    // `orientation` is a required property on Workspaces, so it needs a
+    // value at creation time or the Loader fails to instantiate the item at
+    // all. This default is only a birth-value - the engine immediately
+    // overwrites it with a live Qt.binding in wireWidget (idsUsingOrientation),
+    // same as every other orientation-driven widget.
     property Component workspacesComponent: Component {
         Workspaces {
             id: workspacesItem
@@ -144,7 +148,6 @@ Singleton {
     property Component pinComponent: Component {
         PinButton {
             property var toggleHandler: function () {}
-            vertical: true
             onToggle: toggleHandler
         }
     }
