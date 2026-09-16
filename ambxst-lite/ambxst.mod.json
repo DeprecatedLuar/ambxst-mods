@@ -25,6 +25,18 @@
     {
       "type": "patch",
       "source": "patches/shell.patch"
+    },
+    {
+      "type": "patch",
+      "source": "patches/brightness.patch"
+    },
+    {
+      "type": "patch",
+      "source": "patches/nightlightclient.patch"
+    },
+    {
+      "type": "patch",
+      "source": "patches/screenrecorder.patch"
     }
   ]
 }

@@ -1,0 +1,17 @@
+diff --git a/modules/services/NightLightClient.qml b/modules/services/NightLightClient.qml
+index fdabfa3..9205a79 100644
+--- a/modules/services/NightLightClient.qml
++++ b/modules/services/NightLightClient.qml
+@@ -11,10 +11,12 @@ Singleton {
+     property int subHandle: -1
+ 
+     function toggle() {
++        if (!DependencyCheck.require("wlsunset")) return;
+         BackendService.call("nightlight.toggle", {});
+     }
+ 
+     function setEnabled(value) {
++        if (!DependencyCheck.require("wlsunset")) return;
+         BackendService.call("nightlight.set", {enabled: value});
+     }
+ 

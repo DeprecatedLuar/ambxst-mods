@@ -1,0 +1,12 @@
+diff --git a/modules/services/ScreenRecorder.qml b/modules/services/ScreenRecorder.qml
+index b46f8a2..2d0daea 100644
+--- a/modules/services/ScreenRecorder.qml
++++ b/modules/services/ScreenRecorder.qml
+@@ -101,6 +101,7 @@ QtObject {
+     function startRecording(recordAudioOutput, recordAudioInput, mode, regionStr) {
+         if (isRecording)
+             return;
++        if (!DependencyCheck.require("gpu-screen-recorder")) return;
+ 
+         var params = {
+             mode: mode,

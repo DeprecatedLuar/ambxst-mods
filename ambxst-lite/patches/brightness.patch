@@ -1,0 +1,12 @@
+diff --git a/modules/services/Brightness.qml b/modules/services/Brightness.qml
+index 9f01e78..a4b552c 100644
+--- a/modules/services/Brightness.qml
++++ b/modules/services/Brightness.qml
+@@ -99,6 +99,7 @@ Singleton {
+         interval: 1000
+         repeat: false
+         onTriggered: {
++            if (!DependencyCheck.has("ddcutil")) return;
+             if (!SuspendManager.isSuspending) {
+                 ddcProc.running = true;
+             }

@@ -76,7 +76,7 @@ Singleton {
 
         Notifications.notifyInternal({
             summary: tools[bin].label + " unavailable",
-            body: "Requires `" + bin + "` - not found in PATH.",
+            body: bin + " not found, please install it to use this feature.",
             replaceKey: "dep-" + bin,
             appName: "Ambxst"
         });
