@@ -1,5 +1,5 @@
 diff --git a/modules/bar/BarContent.qml b/modules/bar/BarContent.qml
-index b9e57ca..bde19c0 100644
+index b9e57ca..97eb873 100644
 --- a/modules/bar/BarContent.qml
 +++ b/modules/bar/BarContent.qml
 @@ -17,6 +17,7 @@ import qs.modules.components
@@ -10,15 +10,16 @@ index b9e57ca..bde19c0 100644
  import qs.config
  import "." as Bar
  
-@@ -27,6 +28,7 @@ Item {
+@@ -27,6 +28,8 @@ Item {
  
      property string barPosition: (Config.bar && Config.bar.position !== undefined && ["top", "bottom", "left", "right"].includes(Config.bar.position) ? Config.bar.position : "top")
      property string orientation: barPosition === "left" || barPosition === "right" ? "vertical" : "horizontal"
-+    readonly property bool tweakerActive: BarTweaks.active
++    readonly property var tweakerConfig: BarTweaks.byOrientation[orientation]
++    readonly property bool tweakerActive: tweakerConfig.active
  
      // Auto-hide properties
      onPinnedChanged: {
-@@ -172,11 +174,11 @@ Item {
+@@ -172,11 +175,11 @@ Item {
      readonly property int leftOuterMargin: (orientation === "horizontal" || barPosition === "left") ? barBg.outerMargin : 0
      readonly property int rightOuterMargin: (orientation === "horizontal" || barPosition === "right") ? barBg.outerMargin : 0
  
@@ -29,12 +30,12 @@ index b9e57ca..bde19c0 100644
      
 -    readonly property int barTargetWidth: orientation === "vertical" ? (contentImplicitWidth + 2 * barPadding) : 0
 -    readonly property int barTargetHeight: orientation === "horizontal" ? (contentImplicitHeight + 2 * barPadding) : 0
-+    readonly property int barTargetWidth: orientation === "vertical" ? ((tweakerActive && BarTweaks.barThicknessSet) ? BarTweaks.barThickness : (contentImplicitWidth + 2 * barPadding)) : 0
-+    readonly property int barTargetHeight: orientation === "horizontal" ? ((tweakerActive && BarTweaks.barThicknessSet) ? BarTweaks.barThickness : (contentImplicitHeight + 2 * barPadding)) : 0
++    readonly property int barTargetWidth: orientation === "vertical" ? ((tweakerActive && tweakerConfig.barThicknessSet) ? tweakerConfig.barThickness : (contentImplicitWidth + 2 * barPadding)) : 0
++    readonly property int barTargetHeight: orientation === "horizontal" ? ((tweakerActive && tweakerConfig.barThicknessSet) ? tweakerConfig.barThickness : (contentImplicitHeight + 2 * barPadding)) : 0
  
      readonly property bool actualContainBar: (Config.bar && Config.bar.containBar !== undefined ? Config.bar.containBar : false) && (Config.bar && Config.bar.frameEnabled !== undefined ? Config.bar.frameEnabled : false)
      readonly property int totalBarWidth: barTargetWidth + 
-@@ -352,9 +354,19 @@ Item {
+@@ -352,9 +355,19 @@ Item {
                  anchors.fill: parent
                  position: root.barPosition
  
@@ -55,7 +56,7 @@ index b9e57ca..bde19c0 100644
                      anchors.fill: parent
                      sourceComponent: RowLayout {
                          spacing: 4
-@@ -555,7 +567,7 @@ Item {
+@@ -555,7 +568,7 @@ Item {
  
                  Loader {
                      id: verticalLoader

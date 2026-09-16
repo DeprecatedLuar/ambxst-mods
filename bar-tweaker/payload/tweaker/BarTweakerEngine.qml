@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 
-// BarTweakerEngine: renders BarTweaks.layout inside the bar, laid out
-// along whichever axis the host bar is on.
+// BarTweakerEngine: renders the orientation-matched LayoutConfigFile's
+// layout inside the bar, laid out along whichever axis the host bar is on.
 //
 // Single responsibility: turn the resolved model into widgets. It does not
 // parse config (BarTweaks) and does not build widgets itself (BarWidgetMap)
@@ -20,6 +20,8 @@ GridLayout {
 
     readonly property string verticalOrientation: "vertical"
     readonly property bool vertical: root.barRoot.orientation === root.verticalOrientation
+
+    readonly property var layoutConfig: BarTweaks.byOrientation[root.barRoot.orientation]
 
     flow: root.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
     rowSpacing: 4
@@ -145,7 +147,7 @@ GridLayout {
     }
 
     Repeater {
-        model: BarTweaks.layout.start
+        model: root.layoutConfig.layout.start
         delegate: Loader {
             id: startLoader
             Layout.alignment: root.vertical ? Qt.AlignHCenter : Qt.AlignVCenter
@@ -199,7 +201,7 @@ GridLayout {
             width: root.vertical ? parent.width : Math.min(parent.width, implicitWidth)
 
             Repeater {
-                model: BarTweaks.layout.center
+                model: root.layoutConfig.layout.center
                 delegate: Loader {
                     id: centerLoader
                     Layout.alignment: root.vertical ? Qt.AlignHCenter : Qt.AlignVCenter
@@ -211,7 +213,7 @@ GridLayout {
     }
 
     Repeater {
-        model: BarTweaks.layout.end
+        model: root.layoutConfig.layout.end
         delegate: Loader {
             id: endLoader
             Layout.alignment: root.vertical ? Qt.AlignHCenter : Qt.AlignVCenter

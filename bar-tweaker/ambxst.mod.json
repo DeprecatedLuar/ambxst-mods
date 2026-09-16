@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "license": "MIT",
   "author": "DeprecatedLuar",
-  "description": "Makes the bar's widget layout configurable for every bar position via ~/.config/ambxst/config/mods/bar-tweaker/layout.json instead of hardcoded QML.",
+  "description": "Makes the bar's widget layout configurable per orientation via horizontal.json/vertical.json in ~/.config/ambxst/config/mods/bar-tweaker/ instead of hardcoded QML.",
   "permissions": [
     "Reads and writes its own bar layout config file"
   ],
@@ -21,6 +21,11 @@
       "type": "overlay",
       "source": "payload/tweaker/PinButton.qml",
       "target": "modules/bar/tweaker/PinButton.qml"
+    },
+    {
+      "type": "overlay",
+      "source": "payload/tweaker/LayoutConfigFile.qml",
+      "target": "modules/bar/tweaker/LayoutConfigFile.qml"
     },
     {
       "type": "overlay",
