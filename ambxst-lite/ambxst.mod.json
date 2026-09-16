@@ -37,6 +37,10 @@
     {
       "type": "patch",
       "source": "patches/screenrecorder.patch"
+    },
+    {
+      "type": "patch",
+      "source": "patches/wallpaper.patch"
     }
   ]
 }

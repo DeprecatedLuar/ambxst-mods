@@ -1,0 +1,84 @@
+diff --git a/modules/widgets/dashboard/wallpapers/Wallpaper.qml b/modules/widgets/dashboard/wallpapers/Wallpaper.qml
+index cdf136e..f8925ef 100644
+--- a/modules/widgets/dashboard/wallpapers/Wallpaper.qml
++++ b/modules/widgets/dashboard/wallpapers/Wallpaper.qml
+@@ -3,6 +3,7 @@ import Quickshell
+ import Quickshell.Wayland
+ import Quickshell.Io
+ import qs.modules.globals
++import qs.modules.services
+ import qs.modules.theme
+ import qs.config
+ import "MpvShaderGenerator.js" as ShaderGenerator
+@@ -286,6 +287,7 @@ PanelWindow {
+             GlobalStates.wallpaperManager.setWallpaper(path, targetScreen);
+             return;
+         }
++        if (!activeColorPreset) DependencyCheck.require("matugen");
+ 
+         console.log("setWallpaper called with:", path, "for screen:", targetScreen);
+         initialLoadCompleted = true;
+@@ -342,6 +344,7 @@ PanelWindow {
+             GlobalStates.wallpaperManager.nextWallpaper();
+             return;
+         }
++        if (!activeColorPreset) DependencyCheck.require("matugen");
+ 
+         if (wallpaperPaths.length === 0)
+             return;
+@@ -358,6 +361,7 @@ PanelWindow {
+             GlobalStates.wallpaperManager.previousWallpaper();
+             return;
+         }
++        if (!activeColorPreset) DependencyCheck.require("matugen");
+ 
+         if (wallpaperPaths.length === 0)
+             return;
+@@ -374,6 +378,7 @@ PanelWindow {
+             GlobalStates.wallpaperManager.setWallpaperByIndex(index);
+             return;
+         }
++        if (!activeColorPreset) DependencyCheck.require("matugen");
+ 
+         if (index >= 0 && index < wallpaperPaths.length) {
+             initialLoadCompleted = true;
+@@ -387,6 +392,7 @@ PanelWindow {
+ 
+     // Función para re-ejecutar Matugen con el wallpaper actual
+     function setMatugenScheme(scheme) {
++        DependencyCheck.require("matugen");
+         wallpaperConfig.adapter.matugenScheme = scheme;
+ 
+         if (wallpaperConfig.adapter.activeColorPreset) {
+@@ -401,6 +407,7 @@ PanelWindow {
+     property string mpvSocket: "/tmp/ambxst_mpv_socket_" + (currentScreenName ? currentScreenName : "ALL")
+ 
+     function runMatugenForCurrentWallpaper() {
++        if (!DependencyCheck.has("matugen")) return;
+         if (activeColorPreset) {
+             console.log("Skipping Matugen because color preset is active:", activeColorPreset);
+             return;
+@@ -441,6 +448,7 @@ PanelWindow {
+     }
+ 
+     function updateMpvRuntime(enable) {
++        if (!DependencyCheck.require("socat")) return;
+         var cmdString;
+         if (enable) {
+             // Since we are using unique filenames, we can just set the new path.
+@@ -1403,6 +1411,7 @@ PanelWindow {
+                     id: mpvpaperRestartTimer
+                     interval: 100
+                     onTriggered: {
++                        if (!DependencyCheck.require("mpvpaper")) return;
+                         if (sourceFile) {
+                             console.log("Restarting mpvpaper for:", sourceFile);
+                             mpvpaperProcess.running = true;
+@@ -1420,6 +1429,7 @@ PanelWindow {
+                 }
+ 
+                 Component.onCompleted: {
++                    if (!DependencyCheck.require("mpvpaper")) return;
+                     if (sourceFile) {
+                         console.log("Initial mpvpaper run for:", sourceFile);
+                         mpvpaperProcess.running = true;
