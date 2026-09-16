@@ -1,0 +1,30 @@
+{
+  "manifestVersion": 1,
+  "id": "deprecatedluar.ambxst-lite",
+  "name": "Ambxst Lite",
+  "version": "0.1.0",
+  "license": "MIT",
+  "author": "DeprecatedLuar",
+  "description": "Notifies when a feature needs an optional tool that is not installed, and skips background work for missing tools.",
+  "permissions": [
+    "Checks whether optional external tools exist in PATH"
+  ],
+  "compatibility": {
+    "api": 1,
+    "ambxst": ">=1.3.0 <1.4.0",
+    "testedBaseCommits": [
+      "af9f8ad4f42d7cd77f57a7c75f6a2a5d1fb59674"
+    ]
+  },
+  "operations": [
+    {
+      "type": "overlay",
+      "source": "payload/DependencyCheck.qml",
+      "target": "modules/services/DependencyCheck.qml"
+    },
+    {
+      "type": "patch",
+      "source": "patches/shell.patch"
+    }
+  ]
+}

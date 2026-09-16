@@ -1,0 +1,12 @@
+diff --git a/shell.qml b/shell.qml
+index 888996d..649f5cc 100644
+--- a/shell.qml
++++ b/shell.qml
+@@ -293,6 +293,7 @@ ShellRoot {
+                 _ = GlobalShortcuts.appId; // Force init (IPC pipe listener)
+                 _ = WallpaperCommandService; // Force init (IPC wallpaper.set subscriber)
+                 _ = PresetCommandService;    // Force init (IPC preset.load subscriber)
++                _ = DependencyCheck.ready; // Force init (optional tool probe)
+                 // PresetsService.initialize() is normally triggered lazily
+                 // when the user opens the Presets tab; the CLI preset
+                 // command needs the list available at boot, so kick it off
