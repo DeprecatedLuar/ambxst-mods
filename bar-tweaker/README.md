@@ -4,7 +4,7 @@
 
 Basically you can configure the Ambxst bar's widget layout through JSON files. 
 
-<img src="other/assets/horizontal-config.webp" alt="horizontal.json layout example" width="600"/>
+<img src="other/assets/horizontal-config.webp" alt="horizontal.json layout example" width="900"/>
 
 ![version](https://img.shields.io/badge/version-0.1.0-blue?style=flat-square)
 ![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)
@@ -40,7 +40,7 @@ Each file lists which widgets appear, in what groups, and in what order. Edits a
 
 Widget *definitions* are not touched. I explicitly decided not to touch on any other logic that goes beyond the **bar**
 <div align="center">
-<img src="other/assets/vertical-config.webp" alt="vertical.json layout example" width="720"/>
+<img src="other/assets/vertical-config.webp" alt="vertical.json layout example" width="700"/>
 </div>
 
 ## Config
