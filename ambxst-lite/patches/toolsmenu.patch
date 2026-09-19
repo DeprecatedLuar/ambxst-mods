@@ -1,0 +1,12 @@
+diff --git a/modules/widgets/tools/ToolsMenu.qml b/modules/widgets/tools/ToolsMenu.qml
+index 2e820c0..7fdb1b9 100644
+--- a/modules/widgets/tools/ToolsMenu.qml
++++ b/modules/widgets/tools/ToolsMenu.qml
+@@ -120,6 +120,7 @@ ActionGrid {
+             colorPickerProc.running = true;
+             root.itemSelected();
+         } else if (action.tooltip === "OCR") {
++            if (!DependencyCheck.require("tesseract")) return;
+             Screenshot.initialize();
+             Screenshot.captureMode = "ocr";
+             GlobalStates.screenshotToolVisible = true;

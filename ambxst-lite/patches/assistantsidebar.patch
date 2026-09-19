@@ -1,0 +1,12 @@
+diff --git a/modules/sidebar/AssistantSidebar.qml b/modules/sidebar/AssistantSidebar.qml
+index be201de..8824855 100644
+--- a/modules/sidebar/AssistantSidebar.qml
++++ b/modules/sidebar/AssistantSidebar.qml
+@@ -1499,6 +1499,7 @@ Item {
+                                             radius: 16
+                                         }
+ 
++                                        onPressed: DependencyCheck.require("zenity")
+                                         onClicked: zenityProcess.running = true
+                                     }
+                                     Button {

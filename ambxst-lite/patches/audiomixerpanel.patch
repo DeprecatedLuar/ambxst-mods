@@ -1,0 +1,12 @@
+diff --git a/modules/widgets/dashboard/controls/AudioMixerPanel.qml b/modules/widgets/dashboard/controls/AudioMixerPanel.qml
+index b0dab36..56496eb 100644
+--- a/modules/widgets/dashboard/controls/AudioMixerPanel.qml
++++ b/modules/widgets/dashboard/controls/AudioMixerPanel.qml
+@@ -55,6 +55,7 @@ Item {
+                             icon: Icons.popOpen,
+                             tooltip: "Open PipeWire Volume Control",
+                             onClicked: function () {
++                                if (!DependencyCheck.require("pavucontrol")) return;
+                                 Quickshell.execDetached(["pavucontrol"]);
+                             }
+                         }

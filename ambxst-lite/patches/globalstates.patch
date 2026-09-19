@@ -1,0 +1,12 @@
+diff --git a/modules/globals/GlobalStates.qml b/modules/globals/GlobalStates.qml
+index 528a20b..31e7088 100644
+--- a/modules/globals/GlobalStates.qml
++++ b/modules/globals/GlobalStates.qml
+@@ -13,6 +13,7 @@ Singleton {
+     property string avatarCacheBuster: ""
+ 
+     function pickUserAvatar() {
++        if (!DependencyCheck.require("zenity")) return;
+         filePickerProcess.running = true;
+     }
+ 

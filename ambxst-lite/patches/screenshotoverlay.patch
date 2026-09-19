@@ -1,0 +1,12 @@
+diff --git a/modules/tools/ScreenshotOverlay.qml b/modules/tools/ScreenshotOverlay.qml
+index 24d2cd8..968dc0a 100644
+--- a/modules/tools/ScreenshotOverlay.qml
++++ b/modules/tools/ScreenshotOverlay.qml
+@@ -222,6 +222,7 @@ PanelWindow {
+             ActionButton {
+                 icon: Icons.edit
+                 onTriggered: {
++                    if (!DependencyCheck.require("gradia")) return;
+                     // Open with Gradia (native or Flatpak for Fedora) detached
+                     var proc = Qt.createQmlObject('import Quickshell; import Quickshell.Io; Process { }', root);
+                     proc.command = ["bash", "-c", "if command -v gradia >/dev/null; then gradia \"" + root.imagePath + "\"; else flatpak run be.alexandervanhee.gradia \"" + root.imagePath + "\"; fi & disown"];

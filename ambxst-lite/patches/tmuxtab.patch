@@ -1,0 +1,12 @@
+diff --git a/modules/widgets/dashboard/tmux/TmuxTab.qml b/modules/widgets/dashboard/tmux/TmuxTab.qml
+index a1445e1..21e8ada 100644
+--- a/modules/widgets/dashboard/tmux/TmuxTab.qml
++++ b/modules/widgets/dashboard/tmux/TmuxTab.qml
+@@ -293,6 +293,7 @@ Item {
+     }
+ 
+     function refreshTmuxSessions() {
++        if (!DependencyCheck.require("tmux")) return;
+         tmuxProcess.running = true;
+     }
+ 

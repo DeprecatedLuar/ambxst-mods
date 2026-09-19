@@ -1,0 +1,12 @@
+diff --git a/modules/widgets/dashboard/controls/WifiPanel.qml b/modules/widgets/dashboard/controls/WifiPanel.qml
+index 5672c5f..408de1a 100644
+--- a/modules/widgets/dashboard/controls/WifiPanel.qml
++++ b/modules/widgets/dashboard/controls/WifiPanel.qml
+@@ -66,6 +66,7 @@ Item {
+                         icon: Icons.popOpen,
+                         tooltip: "Network settings",
+                         onClicked: function () {
++                            if (!DependencyCheck.require("nm-connection-editor")) return;
+                             Quickshell.execDetached(["nm-connection-editor"]);
+                         }
+                     },

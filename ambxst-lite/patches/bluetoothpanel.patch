@@ -1,0 +1,12 @@
+diff --git a/modules/widgets/dashboard/controls/BluetoothPanel.qml b/modules/widgets/dashboard/controls/BluetoothPanel.qml
+index 462f39f..aada927 100644
+--- a/modules/widgets/dashboard/controls/BluetoothPanel.qml
++++ b/modules/widgets/dashboard/controls/BluetoothPanel.qml
+@@ -64,6 +64,7 @@ Item {
+                         icon: Icons.popOpen,
+                         tooltip: "Open Blueman",
+                         onClicked: function () {
++                            if (!DependencyCheck.require("blueman-manager")) return;
+                             Quickshell.execDetached(["blueman-manager"]);
+                         }
+                     },

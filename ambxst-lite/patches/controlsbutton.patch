@@ -1,0 +1,12 @@
+diff --git a/modules/bar/ControlsButton.qml b/modules/bar/ControlsButton.qml
+index 687f077..2bd5c11 100644
+--- a/modules/bar/ControlsButton.qml
++++ b/modules/bar/ControlsButton.qml
+@@ -78,6 +78,7 @@ Item {
+             acceptedButtons: Qt.LeftButton | Qt.RightButton
+             onClicked: mouse => {
+                 if (mouse.button === Qt.RightButton) {
++                    if (!DependencyCheck.require("pavucontrol")) return;
+                     Quickshell.execDetached(["pavucontrol"]);
+                     return;
+                 } else if (mouse.button === Qt.LeftButton) {
